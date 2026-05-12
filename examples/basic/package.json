@@ -1,0 +1,16 @@
+{
+  "name": "@mimusic/example-basic",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Basic MiMusic plugin example — demonstrates router, jsonResponse, and mimusic API usage.",
+  "scripts": {
+    "build": "mimusic-plugin build",
+    "validate": "mimusic-plugin validate",
+    "dev": "mimusic-plugin dev"
+  },
+  "devDependencies": {
+    "@mimusic/plugin-sdk": "workspace:^",
+    "@mimusic/plugin-builder": "workspace:^",
+    "typescript": "^5.7.0"
+  }
+}

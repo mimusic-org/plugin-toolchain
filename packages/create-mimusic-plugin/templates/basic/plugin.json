@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/mimusic-org/plugin-toolchain/main/schemas/plugin.schema.json",
+  "name": "{{name}}",
+  "version": "0.1.0",
+  "description": "{{description}}",
+  "author": "{{author}}",
+  "homepage": "",
+  "license": "Apache-2.0",
+  "entryPath": "{{entryPath}}",
+  "main": "main.js",
+  "minHostVersion": "1.3.0",
+  "permissions": {{permissions}},
+  "updateUrl": "",
+  "entryHash": "",
+  "zipHash": ""
+}

@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["@mimusic/plugin-sdk"],
+    "rootDir": "src",
+    "outDir": "build",
+    "noEmit": true
+  },
+  "include": ["src/**/*"]
+}

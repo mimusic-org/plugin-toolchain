@@ -1,0 +1,49 @@
+{
+  "name": "@mimusic/plugin-builder",
+  "version": "0.1.0",
+  "description": "Build tool for MiMusic JS plugins (TS/JS → QuickJS-compatible ZIP)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "bin": {
+    "mimusic-plugin": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"no tests yet\" && exit 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.0",
+    "jszip": "^3.10.0",
+    "glob": "^11.0.0"
+  },
+  "devDependencies": {
+    "@mimusic/plugin-sdk": "workspace:^",
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  },
+  "keywords": [
+    "mimusic",
+    "plugin",
+    "builder",
+    "quickjs"
+  ],
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  }
+}

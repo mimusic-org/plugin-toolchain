@@ -1,0 +1,11 @@
+{
+  "name": "example-basic",
+  "version": "0.1.0",
+  "description": "A basic MiMusic plugin example using @mimusic/plugin-sdk.",
+  "author": "MiMusic Team",
+  "entryPath": "example-basic",
+  "main": "main.js",
+  "permissions": ["songs.read"],
+  "entryHash": "",
+  "zipHash": ""
+}

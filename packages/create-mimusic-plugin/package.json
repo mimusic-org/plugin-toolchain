@@ -1,0 +1,36 @@
+{
+  "name": "create-mimusic-plugin",
+  "version": "0.1.0",
+  "description": "Scaffolding tool for MiMusic JS plugin projects",
+  "type": "module",
+  "bin": {
+    "create-mimusic-plugin": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"no tests yet\" && exit 0"
+  },
+  "dependencies": {
+    "@inquirer/prompts": "^7.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  },
+  "keywords": [
+    "mimusic",
+    "plugin",
+    "create",
+    "scaffolding"
+  ],
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  }
+}
