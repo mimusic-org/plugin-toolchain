@@ -25,19 +25,46 @@ pnpm run build
 
 ```bash
 pnpm install
-pnpm -r build
+pnpm --filter "./packages/*" build    # 构建三个发布包
+pnpm --filter "./examples/*" build    # （可选）验证模板示例
 ```
 
-## 发布
+> ⚠️ 首次 `pnpm install` 时 pnpm 会 WARN无法为 `examples/basic` 创建 `mimusic-plugin` bin 链接（因为 `plugin-builder/dist/cli.js` 尚未构建），属正常现象。build 完成后如需构建 examples，先运行 `pnpm install --force` 刷新 bin 链接。
 
-使用 [Changesets](https://github.com/changesets/changesets) 管理版本：
+## 发版
+
+基于 [Changesets](https://github.com/changesets/changesets) + npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC，无需 NPM_TOKEN）。
+
+### 推荐：CI 自动发版
 
 ```bash
-pnpm changeset                 # 记录变更
-pnpm changeset version         # bump 版本 + 生成 CHANGELOG
-git commit -am "chore: release"
-git push                       # GitHub Actions 自动发布到 npm
+# 1. 写代码 + 记录变更
+pnpm changeset                         # 交互选包 + bump 级别 + 写 changelog
+git add . && git commit -m "feat: ..."
+git push                               # 开 PR → 合并到 main
+
+# 2. CI 自动开一条 Release PR，合并后再次跑 release.yml，通过 OIDC 发 npm
 ```
+
+### 本地一键发版（跳过 PR）
+
+```bash
+pnpm changeset                         # 记录变更
+pnpm run release:local                 # version + commit + tag + push --follow-tags
+# 后续由 CI 自动 publish
+```
+
+### 脚本一览
+
+| 脚本 | 作用 |
+|---|---|
+| `pnpm changeset` | 创建变更描述 |
+| `pnpm run release:version` | 消费 changeset → 升版本 + 更新 CHANGELOG |
+| `pnpm run release:tag` | 打 git tag（`@scope/pkg@x.y.z`） |
+| `pnpm run release:local` | 本地一键：version + commit + tag + push |
+| `pnpm run release` | 构建 + `changeset publish`（CI 专用） |
+
+> ⚠️ 不要用 `pnpm version`/`pnpm tag`——`pnpm version` 是 pnpm 内置命令，会屏蔽同名 script。必须显式 `pnpm run release:version`。
 
 ## License
 
