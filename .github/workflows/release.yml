@@ -36,7 +36,7 @@ jobs:
         run: npm install -g npm@latest
 
       - name: Build all packages
-        run: pnpm -r build
+        run: pnpm --filter "./packages/*" build
 
       - name: Create Release PR or Publish to npm
         id: changesets
