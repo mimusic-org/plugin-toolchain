@@ -8,8 +8,8 @@
     "lint": "eslint packages/*/src --ext .ts",
     "clean": "pnpm -r exec rm -rf dist",
     "changeset": "changeset",
-    "version": "changeset version",
-    "tag": "changeset tag",
+    "release:version": "changeset version",
+    "release:tag": "changeset tag",
     "release": "pnpm run build && changeset publish",
     "release:local": "changeset version && git add -A && git commit -m \"chore(release): version packages\" && changeset tag && git push --follow-tags"
   },
