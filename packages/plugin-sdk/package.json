@@ -32,6 +32,15 @@
     "sdk",
     "quickjs"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mimusic-org/plugin-toolchain.git",
+    "directory": "packages/plugin-sdk"
+  },
+  "homepage": "https://github.com/mimusic-org/plugin-toolchain/tree/main/packages/plugin-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/mimusic-org/plugin-toolchain/issues"
+  },
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"

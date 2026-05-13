@@ -42,6 +42,15 @@
     "builder",
     "quickjs"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mimusic-org/plugin-toolchain.git",
+    "directory": "packages/plugin-builder"
+  },
+  "homepage": "https://github.com/mimusic-org/plugin-toolchain/tree/main/packages/plugin-builder#readme",
+  "bugs": {
+    "url": "https://github.com/mimusic-org/plugin-toolchain/issues"
+  },
   "license": "Apache-2.0",
   "publishConfig": {
     "access": "public"
