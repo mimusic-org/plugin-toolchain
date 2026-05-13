@@ -28,7 +28,8 @@ const AVAILABLE_PERMISSIONS = [
   { name: 'storage (持久化存储 - storage API)', value: 'storage' },
   { name: 'songs.read (读取歌曲列表/元数据)', value: 'songs.read' },
   { name: 'songs.write (写入/修改歌曲元数据)', value: 'songs.write' },
-  { name: 'playlists.* (歌单所有读写操作)', value: 'playlists.*' },
+  { name: 'playlists.read (读取歌单及歌单中的歌曲)', value: 'playlists.read' },
+  { name: 'playlists.write (创建/修改/删除歌单及其歌曲)', value: 'playlists.write' },
   { name: 'inter-plugin (与其他插件通信)', value: 'inter-plugin' },
   { name: 'command (执行宿主提供的指令)', value: 'command' },
 ];
