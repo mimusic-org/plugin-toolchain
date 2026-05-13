@@ -56,6 +56,7 @@ jobs:
           echo "✅ all three packages aligned at $VERSION"
 
       - name: Publish all packages to npm
+        # 仓库为 public + OIDC Trusted Publishing，启用 sigstore provenance（供 npm install --provenance 核查）
         run: pnpm --filter "./packages/*" publish --access public --no-git-checks
         env:
           NPM_CONFIG_PROVENANCE: 'true'
