@@ -11,7 +11,7 @@ export interface ManifestValidationError {
 
 const ENTRY_PATH_REGEX = /^[a-z][a-z0-9-]*$/;
 const SEMVER_REGEX = /^\d+\.\d+\.\d+/;
-const VALID_PERMISSIONS = ['storage', 'songs.read', 'songs.write', 'playlists.read', 'playlists.write', 'inter-plugin', 'command'];
+const VALID_PERMISSIONS = ['storage', 'songs.read', 'songs.write', 'playlists.*', 'inter-plugin', 'command'];
 
 /**
  * 从 cwd 读取 plugin.json

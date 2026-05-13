@@ -25,13 +25,12 @@ const SDK_VERSION = '^0.1.0';
 const BUILDER_VERSION = '^0.1.0';
 
 const AVAILABLE_PERMISSIONS = [
-  { name: 'network (允许 fetch 访问外部 HTTP 资源)', value: 'network' },
-  { name: 'songs.read (读取歌曲列表)', value: 'songs.read' },
+  { name: 'storage (持久化存储 - storage API)', value: 'storage' },
+  { name: 'songs.read (读取歌曲列表/元数据)', value: 'songs.read' },
   { name: 'songs.write (写入/修改歌曲元数据)', value: 'songs.write' },
-  { name: 'playlists.read (读取歌单)', value: 'playlists.read' },
-  { name: 'playlists.write (写入歌单)', value: 'playlists.write' },
-  { name: 'config.read (读取插件配置)', value: 'config.read' },
-  { name: 'config.write (写入插件配置)', value: 'config.write' },
+  { name: 'playlists.* (歌单所有读写操作)', value: 'playlists.*' },
+  { name: 'inter-plugin (与其他插件通信)', value: 'inter-plugin' },
+  { name: 'command (执行宿主提供的指令)', value: 'command' },
 ];
 
 interface Answers {

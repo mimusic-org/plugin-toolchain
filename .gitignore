@@ -9,3 +9,9 @@ build/
 .vscode/
 coverage/
 *.tsbuildinfo
+
+# 在仓库根目录本地试跑脚手架产出的测试工程（名字自取，统一忽略）
+/my-plugin/
+/hello/
+/demo/
+*.jsplugin.zip
