@@ -7,14 +7,13 @@
     "test": "pnpm -r test",
     "lint": "eslint packages/*/src --ext .ts",
     "clean": "pnpm -r exec rm -rf dist",
-    "changeset": "changeset",
-    "release:version": "changeset version",
-    "release:tag": "changeset tag",
-    "release": "pnpm run build && changeset publish",
-    "release:local": "changeset version && git add -A && git commit -m \"chore(release): version packages\" && changeset tag && git push --follow-tags"
+    "release": "node scripts/release.mjs",
+    "release:patch": "node scripts/release.mjs patch",
+    "release:minor": "node scripts/release.mjs minor",
+    "release:major": "node scripts/release.mjs major",
+    "release:dry": "node scripts/release.mjs patch --dry-run"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.0",
     "eslint": "^9.0.0",
     "typescript": "^5.7.0"
   }

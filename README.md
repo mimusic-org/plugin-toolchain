@@ -33,38 +33,33 @@ pnpm --filter "./examples/*" build    # （可选）验证模板示例
 
 ## 发版
 
-基于 [Changesets](https://github.com/changesets/changesets) + npm [Trusted Publishing](https://docs.npmjs.com/trusted-publishers)（OIDC，无需 NPM_TOKEN）。
+极简流程：本地一句命令 bump + tag，推送后 GitHub Actions 自动发 npm + 建 GitHub Release（release notes 从 tag 区间的 git log 生成）。
 
-### 推荐：CI 自动发版
-
-```bash
-# 1. 写代码 + 记录变更
-pnpm changeset                         # 交互选包 + bump 级别 + 写 changelog
-git add . && git commit -m "feat: ..."
-git push                               # 开 PR → 合并到 main
-
-# 2. CI 自动开一条 Release PR，合并后再次跑 release.yml，通过 OIDC 发 npm
-```
-
-### 本地一键发版（跳过 PR）
+三个包 `@mimusic/plugin-sdk` / `@mimusic/plugin-builder` / `create-mimusic-plugin` 共享同一个版本号，一起发。
 
 ```bash
-pnpm changeset                         # 记录变更
-pnpm run release:local                 # version + commit + tag + push --follow-tags
-# 后续由 CI 自动 publish
+# 在 main 分支、工作区干净、本地与 origin/main 同步的前提下：
+pnpm run release:patch       # 0.4.1 → 0.4.2
+pnpm run release:minor       # 0.4.1 → 0.5.0
+pnpm run release:major       # 0.4.1 → 1.0.0
+node scripts/release.mjs 0.4.5   # 指定版本号
+node scripts/release.mjs patch --dry-run   # 干跑查看改动
 ```
 
-### 脚本一览
+脚本会：
+1. 校验三包版本一致 + tag 未占用 + 分支/工作区状态干净
+2. 同步写回三个 `package.json` 的 `version`
+3. 同步更新 `packages/create-mimusic-plugin/src/index.ts` 的 `SDK_VERSION` / `BUILDER_VERSION` 常量
+4. `git commit -m "chore(release): vX.Y.Z"` + `git tag -a vX.Y.Z` + `git push --follow-tags`
 
-| 脚本 | 作用 |
-|---|---|
-| `pnpm changeset` | 创建变更描述 |
-| `pnpm run release:version` | 消费 changeset → 升版本 + 更新 CHANGELOG |
-| `pnpm run release:tag` | 打 git tag（`@scope/pkg@x.y.z`） |
-| `pnpm run release:local` | 本地一键：version + commit + tag + push |
-| `pnpm run release` | 构建 + `changeset publish`（CI 专用） |
+tag 推上后 [release.yml](./.github/workflows/release.yml) 会：
+- 校验包版本与 tag 一致
+- `pnpm publish` 到 npm（OIDC Trusted Publishing，无需 NPM_TOKEN）
+- 拉上一个 tag 到本 tag 的 git log 作为 release notes，创建 GitHub Release
 
-> ⚠️ 不要用 `pnpm version`/`pnpm tag`——`pnpm version` 是 pnpm 内置命令，会屏蔽同名 script。必须显式 `pnpm run release:version`。
+### 为什么不用 changesets
+
+单人开发场景下，changesets 多了一道中间 PR、一堆 markdown 碎文件、一个外部依赖。现在 release notes 直接从 commit message 生成，只要 commit 写得干净就够。
 
 ## License
 

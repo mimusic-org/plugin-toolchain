@@ -2,7 +2,8 @@ name: Release
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*.*.*'
 
 concurrency:
   group: release-${{ github.ref }}
@@ -10,16 +11,15 @@ concurrency:
 
 jobs:
   release:
-    name: Release
+    name: Publish to npm and GitHub
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      id-token: write
+      contents: write   # 创建 GitHub Release
+      id-token: write   # npm Trusted Publishing (OIDC)
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # 需要全部历史，用于生成 release notes
 
       - uses: pnpm/action-setup@v4
 
@@ -38,13 +38,63 @@ jobs:
       - name: Build all packages
         run: pnpm --filter "./packages/*" build
 
-      - name: Create Release PR or Publish to npm
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: pnpm changeset publish
-          version: pnpm changeset version
-          commit: "chore(release): version packages"
-          title: "chore(release): version packages"
+      - name: Verify version matches tag
+        id: ver
+        run: |
+          set -e
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          for pkg in plugin-sdk plugin-builder create-mimusic-plugin; do
+            PKG_VER=$(node -p "require('./packages/$pkg/package.json').version")
+            if [ "$PKG_VER" != "$VERSION" ]; then
+              echo "❌ packages/$pkg/package.json version=$PKG_VER does not match tag=$VERSION"
+              exit 1
+            fi
+          done
+          echo "✅ all three packages aligned at $VERSION"
+
+      - name: Publish all packages to npm
+        run: pnpm --filter "./packages/*" publish --access public --no-git-checks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+      - name: Generate release notes
+        id: notes
+        env:
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          set -e
+          PREV=$(git tag --list 'v*.*.*' --sort=-v:refname | grep -v "^${TAG}$" | head -n 1 || true)
+          {
+            echo "## What's Changed"
+            echo
+            if [ -n "$PREV" ]; then
+              echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${PREV}...${TAG}"
+              echo
+              git log "${PREV}..${TAG}" --pretty=format:'- %s (%h)' --no-merges
+            else
+              echo "Initial release."
+              echo
+              git log "${TAG}" --pretty=format:'- %s (%h)' --no-merges -n 50
+            fi
+            echo
+            echo
+            echo "## Published Packages"
+            echo
+            VER="${TAG#v}"
+            echo "- \`@mimusic/plugin-sdk@${VER}\`"
+            echo "- \`@mimusic/plugin-builder@${VER}\`"
+            echo "- \`create-mimusic-plugin@${VER}\`"
+          } > RELEASE_NOTES.md
+          cat RELEASE_NOTES.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
