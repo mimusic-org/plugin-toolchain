@@ -2,8 +2,10 @@
 
 import * as esbuild from 'esbuild';
 import JSZip from 'jszip';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, unlinkSync, readdirSync as readdirSyncTop } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { readManifest, validateManifest } from './manifest.js';
 import { computeEntryHash, computeCanonicalZipHash, sha256Hex } from './hash.js';
 import type { PluginManifest } from '@mimusic/plugin-sdk';
@@ -80,15 +82,74 @@ export async function buildPlugin(opts: BuildOptions): Promise<BuildResult> {
     cpSync(staticDir, join(buildDir, 'static'), { recursive: true });
   }
 
+  // [3.1] 合并打包前端 JS（如果 static/js/app.js 存在）
+  const staticJsAppPath = join(buildDir, 'static', 'js', 'app.js');
+  if (existsSync(staticJsAppPath)) {
+    const bundleOutPath = join(buildDir, 'static', 'js', 'app.bundle.js');
+    await esbuild.build({
+      entryPoints: [staticJsAppPath],
+      outfile: bundleOutPath,
+      bundle: true,
+      platform: 'browser',
+      format: 'iife',
+      target: 'es2020',
+      minify: mode === 'production',
+    });
+
+    // 删除 static/js/ 下除 app.bundle.js 外的所有 .js 文件
+    const staticJsDir = join(buildDir, 'static', 'js');
+    const jsFiles = readdirSyncTop(staticJsDir).filter(f => f.endsWith('.js') && f !== 'app.bundle.js');
+    for (const f of jsFiles) {
+      unlinkSync(join(staticJsDir, f));
+    }
+
+    // 更新 index.html 中的 script 引用
+    const indexHtmlPath = join(buildDir, 'static', 'index.html');
+    if (existsSync(indexHtmlPath)) {
+      let html = readFileSync(indexHtmlPath, 'utf-8');
+      html = html.replace(
+        /<script\s+type="module"\s+src="static\/js\/app\.js"><\/script>/,
+        '<script src="js/app.bundle.js"></script>'
+      );
+      writeFileSync(indexHtmlPath, html);
+    }
+
+    console.log(`  📦 static/js/ bundled → app.bundle.js (${jsFiles.length} files merged)`);
+  }
+
+  // [3.2] 编译 main.js 为 main.jsc 字节码（如果 jsc 工具可用）
+  let mainFileName = 'main.js';
+  const mainJsPath = join(buildDir, 'main.js');
+  const mainJscPath = join(buildDir, 'main.jsc');
+  try {
+    const jscCmd = findJscBinary();
+    if (!jscCmd) {
+      throw new Error('jsc binary not found');
+    }
+    execFileSync(jscCmd, [mainJsPath, mainJscPath], { stdio: 'pipe' });
+    // 编译成功，删除 main.js
+    unlinkSync(mainJsPath);
+    mainFileName = 'main.jsc';
+    console.log(`  🔒 main.js compiled → main.jsc (via ${jscCmd})`);
+  } catch {
+    // jsc 不可用或编译失败，保留 main.js
+    console.log(`  ⚠️  jsc not available, keeping main.js`);
+  }
+
   // [4] 计算 entryHash
-  const mainJsContent = readFileSync(join(buildDir, 'main.js'));
+  const mainJsContent = readFileSync(join(buildDir, mainFileName));
   const entryHash = computeEntryHash(mainJsContent);
 
   // [5] 计算 zipHash（排除 plugin.json）
   const zipHash = computeCanonicalZipHash(buildDir);
 
   // [6] 写入最终 plugin.json（含 hash）
-  const finalManifest: PluginManifest = { ...manifest, entryHash, zipHash };
+  const finalManifest: PluginManifest = {
+    ...manifest,
+    main: mainFileName,
+    entryHash,
+    zipHash,
+  };
   writeFileSync(join(buildDir, 'plugin.json'), JSON.stringify(finalManifest, null, 2));
 
   // [7] 打包为 .jsplugin.zip
@@ -146,7 +207,43 @@ export async function validatePlugin(cwd: string): Promise<ValidationResult> {
 
 // --- 工具 ---
 
+import { getJscBinaryPath } from '@mimusic/jsc';
 import { readdirSync, statSync } from 'node:fs';
+
+/**
+ * 查找 jsc 二进制文件
+ * 优先级：
+ *   1. @mimusic/jsc workspace 包中对应当前平台的预编译二进制
+ *   2. PATH 中的 jsc 命令
+ *   3. 项目根目录的 jsc 兼容旧路径
+ */
+function findJscBinary(): string | null {
+  // 获取当前文件所在目录（兼容 ESM 和 CJS）
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+
+  // 1. 通过 @mimusic/jsc 包定位预编译二进制
+  try {
+    const jscPath = getJscBinaryPath();
+    if (existsSync(jscPath)) return jscPath;
+  } catch {
+    // 包未安装，继续尝试下一个路径
+  }
+
+  // 2. 检查 PATH 中的 jsc
+  try {
+    execFileSync('jsc', ['--help'], { stdio: 'pipe' });
+    return 'jsc';
+  } catch {
+    // 继续尝试下一个路径
+  }
+
+  // 3. 兼容旧路径：项目根目录的 jsc (mimusic/jsc)
+  // 从 src/ 或 dist/ → plugin-builder/ → packages/ → plugin-toolchain/ → mimusic/
+  const projectJsc = join(currentDir, '..', '..', '..', '..', 'jsc');
+  if (existsSync(projectJsc)) return projectJsc;
+
+  return null;
+}
 
 function addDirToZip(zip: JSZip, dirPath: string, prefix: string) {
   const items = readdirSync(dirPath);

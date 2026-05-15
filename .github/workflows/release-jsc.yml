@@ -1,0 +1,121 @@
+name: Release JSC
+
+on:
+  push:
+    tags:
+      - 'jsc-v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. jsc-v1.0.0)'
+        required: true
+
+concurrency:
+  group: release-jsc-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build jsc (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            suffix: ''
+          - goos: linux
+            goarch: arm64
+            suffix: ''
+          - goos: darwin
+            goarch: amd64
+            suffix: ''
+          - goos: darwin
+            goarch: arm64
+            suffix: ''
+          - goos: windows
+            goarch: amd64
+            suffix: '.exe'
+          - goos: windows
+            goarch: arm64
+            suffix: '.exe'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: plugin-toolchain/packages/jsc/go.sum
+
+      - name: Build
+        working-directory: plugin-toolchain/packages/jsc
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          OUTPUT="jsc-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}"
+          go build -ldflags="-s -w" -o "$OUTPUT" .
+          echo "artifact=$OUTPUT" >> "$GITHUB_ENV"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsc-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: plugin-toolchain/packages/jsc/${{ env.artifact }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Determine tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Generate checksums
+        working-directory: dist
+        run: sha256sum jsc-* > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "JSC ${{ steps.tag.outputs.tag }}"
+          body: |
+            ## JSC Bytecode Compiler
+
+            Pre-compiled binaries for the QuickJS bytecode compiler tool.
+
+            ### Platforms
+            - `jsc-linux-amd64` — Linux x86_64
+            - `jsc-linux-arm64` — Linux ARM64
+            - `jsc-darwin-amd64` — macOS Intel
+            - `jsc-darwin-arm64` — macOS Apple Silicon
+            - `jsc-windows-amd64.exe` — Windows x86_64
+            - `jsc-windows-arm64.exe` — Windows ARM64
+
+            ### Usage
+            ```bash
+            jsc <input.js> <output.jsc>
+            ```
+          draft: false
+          prerelease: false
+          files: |
+            dist/jsc-*
+            dist/checksums.txt

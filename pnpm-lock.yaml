@@ -43,8 +43,13 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
+  packages/jsc: {}
+
   packages/plugin-builder:
     dependencies:
+      '@mimusic/jsc':
+        specifier: workspace:*
+        version: link:../jsc
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12

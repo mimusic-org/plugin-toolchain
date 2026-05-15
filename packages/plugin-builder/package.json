@@ -26,6 +26,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@mimusic/jsc": "workspace:*",
     "esbuild": "^0.25.0",
     "jszip": "^3.10.0",
     "glob": "^11.0.0"
