@@ -1,10 +1,17 @@
 {
   "name": "@mimusic/jsc-linux-x64",
-  "version": "0.4.3",
+  "version": "0.5.0",
   "description": "QuickJS bytecode compiler for linux x64",
-  "os": ["linux"],
-  "cpu": ["x64"],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "x64"
+  ],
   "main": "index.js",
-  "files": ["bin/jsc", "index.js"],
+  "files": [
+    "bin/jsc",
+    "index.js"
+  ],
   "license": "MIT"
 }
