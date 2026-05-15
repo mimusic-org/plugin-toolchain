@@ -1,0 +1,10 @@
+{
+  "name": "@mimusic/jsc-darwin-arm64",
+  "version": "1.0.0",
+  "description": "QuickJS bytecode compiler for darwin arm64",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "main": "index.js",
+  "files": ["bin/jsc", "index.js"],
+  "license": "MIT"
+}

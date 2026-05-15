@@ -45,6 +45,18 @@ importers:
 
   packages/jsc: {}
 
+  packages/jsc-darwin-arm64: {}
+
+  packages/jsc-darwin-x64: {}
+
+  packages/jsc-linux-arm64: {}
+
+  packages/jsc-linux-x64: {}
+
+  packages/jsc-win32-arm64: {}
+
+  packages/jsc-win32-x64: {}
+
   packages/plugin-builder:
     dependencies:
       '@mimusic/jsc':

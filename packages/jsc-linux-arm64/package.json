@@ -1,0 +1,10 @@
+{
+  "name": "@mimusic/jsc-linux-arm64",
+  "version": "1.0.0",
+  "description": "QuickJS bytecode compiler for linux arm64",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "main": "index.js",
+  "files": ["bin/jsc", "index.js"],
+  "license": "MIT"
+}

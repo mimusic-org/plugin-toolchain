@@ -1,0 +1,10 @@
+{
+  "name": "@mimusic/jsc-win32-arm64",
+  "version": "1.0.0",
+  "description": "QuickJS bytecode compiler for win32 arm64",
+  "os": ["win32"],
+  "cpu": ["arm64"],
+  "main": "index.js",
+  "files": ["bin/jsc.exe", "index.js"],
+  "license": "MIT"
+}

@@ -1,14 +1,21 @@
 {
   "name": "@mimusic/jsc",
   "version": "1.0.0",
-  "private": true,
   "type": "module",
   "exports": {
     ".": {
       "types": "./index.d.mts",
       "import": "./index.mjs"
-    },
-    "./bin": "./bin/"
+    }
+  },
+  "files": ["index.mjs", "index.d.mts"],
+  "optionalDependencies": {
+    "@mimusic/jsc-linux-x64": "1.0.0",
+    "@mimusic/jsc-linux-arm64": "1.0.0",
+    "@mimusic/jsc-darwin-x64": "1.0.0",
+    "@mimusic/jsc-darwin-arm64": "1.0.0",
+    "@mimusic/jsc-win32-x64": "1.0.0",
+    "@mimusic/jsc-win32-arm64": "1.0.0"
   },
   "scripts": {
     "build": "node build.mjs"
