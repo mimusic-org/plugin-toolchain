@@ -1,6 +1,6 @@
 {
   "name": "@mimusic/jsc-win32-x64",
-  "version": "1.0.0",
+  "version": "0.4.3",
   "description": "QuickJS bytecode compiler for win32 x64",
   "os": ["win32"],
   "cpu": ["x64"],

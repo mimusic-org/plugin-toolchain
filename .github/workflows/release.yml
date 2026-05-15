@@ -10,8 +10,69 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  # ============================================================
+  # Job 1: Build jsc binaries for all 6 platforms (matrix)
+  # ============================================================
+  build-jsc:
+    name: Build jsc (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            npm_pkg: jsc-linux-x64
+            binary: jsc
+          - goos: linux
+            goarch: arm64
+            npm_pkg: jsc-linux-arm64
+            binary: jsc
+          - goos: darwin
+            goarch: amd64
+            npm_pkg: jsc-darwin-x64
+            binary: jsc
+          - goos: darwin
+            goarch: arm64
+            npm_pkg: jsc-darwin-arm64
+            binary: jsc
+          - goos: windows
+            goarch: amd64
+            npm_pkg: jsc-win32-x64
+            binary: jsc.exe
+          - goos: windows
+            goarch: arm64
+            npm_pkg: jsc-win32-arm64
+            binary: jsc.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: packages/jsc/go.sum
+
+      - name: Build
+        working-directory: packages/jsc
+        env:
+          CGO_ENABLED: '0'
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p ../../dist/${{ matrix.npm_pkg }}/bin
+          go build -ldflags="-s -w" -o "../../dist/${{ matrix.npm_pkg }}/bin/${{ matrix.binary }}" .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.npm_pkg }}
+          path: dist/${{ matrix.npm_pkg }}/bin/${{ matrix.binary }}
+
+  # ============================================================
+  # Job 2: Publish all packages (depends on jsc build)
+  # ============================================================
+  publish:
     name: Publish to npm and GitHub
+    needs: build-jsc
     runs-on: ubuntu-latest
     permissions:
       contents: write   # 创建 GitHub Release
@@ -46,18 +107,51 @@ jobs:
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          for pkg in plugin-sdk plugin-builder create-mimusic-plugin; do
+          for pkg in plugin-sdk plugin-builder create-mimusic-plugin jsc; do
             PKG_VER=$(node -p "require('./packages/$pkg/package.json').version")
             if [ "$PKG_VER" != "$VERSION" ]; then
               echo "❌ packages/$pkg/package.json version=$PKG_VER does not match tag=$VERSION"
               exit 1
             fi
           done
-          echo "✅ all three packages aligned at $VERSION"
+          echo "✅ all packages aligned at $VERSION"
+
+      - name: Download jsc artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Prepare jsc platform packages
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -e
+          for pkg in jsc-linux-x64 jsc-linux-arm64 jsc-darwin-x64 jsc-darwin-arm64 jsc-win32-x64 jsc-win32-arm64; do
+            PKG_DIR="packages/$pkg"
+            # Copy binary from artifact
+            mkdir -p "$PKG_DIR/bin"
+            cp artifacts/$pkg/* "$PKG_DIR/bin/"
+            chmod +x "$PKG_DIR/bin/"* 2>/dev/null || true
+            echo "✅ $pkg prepared (v$VERSION)"
+          done
 
       - name: Publish all packages to npm
-        # 仓库为 public + OIDC Trusted Publishing，启用 sigstore provenance（供 npm install --provenance 核查）
-        run: pnpm --filter "./packages/*" publish --access public --no-git-checks
+        # 先发布 jsc 平台子包（被 @mimusic/jsc 主包 optionalDependencies 引用）
+        # 再发布其他所有包（含 @mimusic/jsc 主包）
+        run: |
+          set -e
+          # 1. Publish jsc platform sub-packages first
+          for pkg in jsc-linux-x64 jsc-linux-arm64 jsc-darwin-x64 jsc-darwin-arm64 jsc-win32-x64 jsc-win32-arm64; do
+            echo "Publishing @mimusic/$pkg..."
+            cd "packages/$pkg"
+            npm publish --access public --provenance || echo "⚠️ $pkg publish failed (may already exist)"
+            cd ../..
+          done
+          # 2. Publish remaining packages (plugin-sdk, plugin-builder, create-mimusic-plugin, jsc)
+          pnpm --filter "./packages/plugin-sdk" publish --access public --no-git-checks
+          pnpm --filter "./packages/plugin-builder" publish --access public --no-git-checks
+          pnpm --filter "./packages/create-mimusic-plugin" publish --access public --no-git-checks
+          pnpm --filter "./packages/jsc" publish --access public --no-git-checks
         env:
           NPM_CONFIG_PROVENANCE: 'true'
 
@@ -88,6 +182,13 @@ jobs:
             echo "- \`@mimusic/plugin-sdk@${VER}\`"
             echo "- \`@mimusic/plugin-builder@${VER}\`"
             echo "- \`create-mimusic-plugin@${VER}\`"
+            echo "- \`@mimusic/jsc@${VER}\`"
+            echo "- \`@mimusic/jsc-linux-x64@${VER}\`"
+            echo "- \`@mimusic/jsc-linux-arm64@${VER}\`"
+            echo "- \`@mimusic/jsc-darwin-x64@${VER}\`"
+            echo "- \`@mimusic/jsc-darwin-arm64@${VER}\`"
+            echo "- \`@mimusic/jsc-win32-x64@${VER}\`"
+            echo "- \`@mimusic/jsc-win32-arm64@${VER}\`"
           } > RELEASE_NOTES.md
           cat RELEASE_NOTES.md
 

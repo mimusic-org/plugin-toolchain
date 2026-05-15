@@ -1,13 +1,14 @@
-name: Release JSC
+# ⚠️ 备用方案：jsc 系列包的独立发布工作流
+# 主要发布已集成到统一 release.yml 中（通过 v*.*.* tag 触发）。
+# 此文件保留用于需要单独发布 jsc 时的手动触发场景。
+name: Release JSC (standalone)
 
 on:
-  push:
-    tags:
-      - 'jsc-v*.*.*'
+  # 不再由 tag push 自动触发，仅支持手动触发
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g. jsc-v1.0.0)'
+        description: 'Release tag (e.g. jsc-v1.0.0) — only use when need to publish jsc independently'
         required: true
 
 concurrency:
@@ -109,11 +110,7 @@ jobs:
       - name: Determine version
         id: ver
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
+          TAG="${{ github.event.inputs.tag }}"
           VERSION="${TAG#jsc-v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"

@@ -1,6 +1,6 @@
 {
   "name": "@mimusic/jsc-darwin-x64",
-  "version": "1.0.0",
+  "version": "0.4.3",
   "description": "QuickJS bytecode compiler for darwin x64",
   "os": ["darwin"],
   "cpu": ["x64"],

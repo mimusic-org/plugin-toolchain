@@ -8,10 +8,11 @@
  * 流程：
  *   1. 读取三包当前版本（必须一致，因为 linked）
  *   2. 计算下一版本号
- *   3. 同步写回 packages/{plugin-sdk,plugin-builder,create-mimusic-plugin}/package.json
+ *   3. 同步写回 packages/{plugin-sdk,plugin-builder,create-mimusic-plugin,jsc,jsc-*}/package.json
  *   4. 同步 create-mimusic-plugin/src/index.ts 中的 SDK_VERSION / BUILDER_VERSION 常量
- *   5. 校验 git 工作区干净 + 在 main 分支
- *   6. git commit -m "chore(release): vX.Y.Z" && git tag vX.Y.Z && git push --follow-tags
+ *   5. 同步 jsc 主包 optionalDependencies 中子包版本号
+ *   6. 校验 git 工作区干净 + 在 main 分支
+ *   7. git commit -m "chore(release): vX.Y.Z" && git tag vX.Y.Z && git push --follow-tags
  *
  * tag 推送后由 .github/workflows/release.yml 拉起，做 build + npm publish + GitHub Release。
  */
@@ -29,6 +30,16 @@ const PKGS = [
   'packages/plugin-builder/package.json',
   'packages/create-mimusic-plugin/package.json',
 ];
+const JSC_MAIN_PKG = 'packages/jsc/package.json';
+const JSC_PLATFORM_PKGS = [
+  'packages/jsc-linux-x64/package.json',
+  'packages/jsc-linux-arm64/package.json',
+  'packages/jsc-darwin-x64/package.json',
+  'packages/jsc-darwin-arm64/package.json',
+  'packages/jsc-win32-x64/package.json',
+  'packages/jsc-win32-arm64/package.json',
+];
+const ALL_PKGS = [...PKGS, JSC_MAIN_PKG, ...JSC_PLATFORM_PKGS];
 const SCAFFOLD_INDEX = 'packages/create-mimusic-plugin/src/index.ts';
 
 const args = process.argv.slice(2);
@@ -103,8 +114,8 @@ if (!DRY) {
 }
 
 // 2. 读取版本（允许不一致，取最高版作为 baseline 自动对齐）
-const pkgs = PKGS.map((p) => ({ path: p, json: readJson(p) }));
-const versions = pkgs.map((p) => p.json.version);
+const allPkgs = ALL_PKGS.map((p) => ({ path: p, json: readJson(p) }));
+const versions = allPkgs.map((p) => p.json.version);
 const uniqueVersions = [...new Set(versions)];
 let current;
 if (uniqueVersions.length === 1) {
@@ -115,8 +126,8 @@ if (uniqueVersions.length === 1) {
     const B = parseSemver(b);
     return A.major - B.major || A.minor - B.minor || A.patch - B.patch;
   }).pop();
-  console.warn('⚠️  三包版本不一致，将以最高版作为 baseline 自动对齐：');
-  pkgs.forEach((p) => console.warn(`   ${p.json.name}: ${p.json.version} → baseline ${current}`));
+  console.warn('⚠️  各包版本不一致，将以最高版作为 baseline 自动对齐：');
+  allPkgs.forEach((p) => console.warn(`   ${p.json.name}: ${p.json.version} → baseline ${current}`));
   console.warn('');
 }
 const next = bump(current, bumpArg);
@@ -134,6 +145,8 @@ console.log(`📦 plugin-toolchain release: ${current} → ${next}  (tag: ${tag}
 console.log(`   - @mimusic/plugin-sdk`);
 console.log(`   - @mimusic/plugin-builder`);
 console.log(`   - create-mimusic-plugin`);
+console.log(`   - @mimusic/jsc`);
+console.log(`   - @mimusic/jsc-{linux-x64,linux-arm64,darwin-x64,darwin-arm64,win32-x64,win32-arm64}`);
 console.log('');
 
 if (!YES && !DRY) {
@@ -153,13 +166,22 @@ if (!YES && !DRY) {
   }
 }
 
-// 4. 改 package.json
-for (const p of pkgs) {
+// 4. 改 package.json（所有包统一 bump）
+for (const p of allPkgs) {
   p.json.version = next;
   writeJson(p.path, p.json);
 }
 
-// 5. 同步 create-mimusic-plugin 脚手架版本常量
+// 5. 同步 jsc 主包 optionalDependencies 中子包版本号
+const jscPkg = allPkgs.find((p) => p.path === JSC_MAIN_PKG);
+if (jscPkg && jscPkg.json.optionalDependencies) {
+  for (const dep of Object.keys(jscPkg.json.optionalDependencies)) {
+    jscPkg.json.optionalDependencies[dep] = next;
+  }
+  writeJson(JSC_MAIN_PKG, jscPkg.json);
+}
+
+// 6. 同步 create-mimusic-plugin 脚手架版本常量
 const idxAbs = resolve(ROOT, SCAFFOLD_INDEX);
 let idxSrc = readFileSync(idxAbs, 'utf8');
 const sdkRe = /const SDK_VERSION = '\^[^']+';/;
@@ -177,8 +199,8 @@ if (DRY) {
   writeFileSync(idxAbs, idxSrc, 'utf8');
 }
 
-// 6. commit + tag + push
-shInherit(`git add ${PKGS.join(' ')} ${SCAFFOLD_INDEX}`);
+// 7. commit + tag + push
+shInherit(`git add ${ALL_PKGS.join(' ')} ${SCAFFOLD_INDEX}`);
 shInherit(`git commit -m "chore(release): ${tag}"`);
 shInherit(`git tag -a ${tag} -m "Release ${tag}"`);
 shInherit('git push --follow-tags');
