@@ -22,5 +22,14 @@
   },
   "scripts": {
     "build": "node build.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mimusic-org/plugin-toolchain.git",
+    "directory": "packages/jsc"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
   }
 }
