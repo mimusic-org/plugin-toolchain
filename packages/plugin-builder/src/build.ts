@@ -103,14 +103,22 @@ export async function buildPlugin(opts: BuildOptions): Promise<BuildResult> {
       unlinkSync(join(staticJsDir, f));
     }
 
-    // 更新 index.html 中的 script 引用
+    // 更新 index.html 中的 script 引用：将 app.js 替换为打包后的 app.bundle.js
+    // 匹配时兼容属性顺序不同、多空格、以及 src 中有无 static/ 前缀
     const indexHtmlPath = join(buildDir, 'static', 'index.html');
     if (existsSync(indexHtmlPath)) {
       let html = readFileSync(indexHtmlPath, 'utf-8');
+      const before = html;
       html = html.replace(
-        /<script\s+type="module"\s+src="static\/js\/app\.js"><\/script>/,
-        '<script src="js/app.bundle.js"></script>'
+        /<script\b[^>]*\bsrc="(?:static\/)?js\/app\.js"[^>]*><\/script>/,
+        '<script src="static/js/app.bundle.js"></script>'
       );
+      if (html === before) {
+        throw new Error(
+          'Failed to update script tag in static/index.html: ' +
+          'expected <script ... src="static/js/app.js" ...> or <script ... src="js/app.js" ...> but pattern not found'
+        );
+      }
       writeFileSync(indexHtmlPath, html);
     }
 
