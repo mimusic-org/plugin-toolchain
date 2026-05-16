@@ -10,9 +10,8 @@
  *   2. 计算下一版本号
  *   3. 同步写回 packages/{plugin-sdk,plugin-builder,create-mimusic-plugin,jsc,jsc-*}/package.json
  *   4. 同步 create-mimusic-plugin/src/index.ts 中的 SDK_VERSION / BUILDER_VERSION 常量
- *   5. 同步 jsc 主包 optionalDependencies 中子包版本号
- *   6. 校验 git 工作区干净 + 在 main 分支
- *   7. git commit -m "chore(release): vX.Y.Z" && git tag vX.Y.Z && git push --follow-tags
+ *   5. 校验 git 工作区干净 + 在 main 分支
+ *   6. git commit -m "chore(release): vX.Y.Z" && git tag vX.Y.Z && git push --follow-tags
  *
  * tag 推送后由 .github/workflows/release.yml 拉起，做 build + npm publish + GitHub Release。
  */
@@ -172,16 +171,7 @@ for (const p of allPkgs) {
   writeJson(p.path, p.json);
 }
 
-// 5. 同步 jsc 主包 optionalDependencies 中子包版本号
-const jscPkg = allPkgs.find((p) => p.path === JSC_MAIN_PKG);
-if (jscPkg && jscPkg.json.optionalDependencies) {
-  for (const dep of Object.keys(jscPkg.json.optionalDependencies)) {
-    jscPkg.json.optionalDependencies[dep] = next;
-  }
-  writeJson(JSC_MAIN_PKG, jscPkg.json);
-}
-
-// 6. 同步 create-mimusic-plugin 脚手架版本常量
+// 5. 同步 create-mimusic-plugin 脚手架版本常量
 const idxAbs = resolve(ROOT, SCAFFOLD_INDEX);
 let idxSrc = readFileSync(idxAbs, 'utf8');
 const sdkRe = /const SDK_VERSION = '\^[^']+';/;
@@ -199,11 +189,11 @@ if (DRY) {
   writeFileSync(idxAbs, idxSrc, 'utf8');
 }
 
-// 7. 重新生成 lockfile（optionalDependencies 版本从 workspace:* 改为固定版本）
+// 6. 重新生成 lockfile
 console.log('📦 更新 pnpm-lock.yaml ...');
 shInherit('pnpm install --no-frozen-lockfile');
 
-// 8. commit + tag + push
+// 7. commit + tag + push
 shInherit(`git add ${ALL_PKGS.join(' ')} ${SCAFFOLD_INDEX} pnpm-lock.yaml`);
 shInherit(`git commit -m "chore(release): ${tag}"`);
 shInherit(`git tag -a ${tag} -m "Release ${tag}"`);
