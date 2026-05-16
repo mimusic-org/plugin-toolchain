@@ -199,8 +199,12 @@ if (DRY) {
   writeFileSync(idxAbs, idxSrc, 'utf8');
 }
 
-// 7. commit + tag + push
-shInherit(`git add ${ALL_PKGS.join(' ')} ${SCAFFOLD_INDEX}`);
+// 7. 重新生成 lockfile（optionalDependencies 版本从 workspace:* 改为固定版本）
+console.log('📦 更新 pnpm-lock.yaml ...');
+shInherit('pnpm install --no-frozen-lockfile');
+
+// 8. commit + tag + push
+shInherit(`git add ${ALL_PKGS.join(' ')} ${SCAFFOLD_INDEX} pnpm-lock.yaml`);
 shInherit(`git commit -m "chore(release): ${tag}"`);
 shInherit(`git tag -a ${tag} -m "Release ${tag}"`);
 shInherit('git push --follow-tags');

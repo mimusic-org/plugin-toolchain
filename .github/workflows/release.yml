@@ -91,7 +91,7 @@ jobs:
           registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Ensure npm supports Trusted Publishing (OIDC)
         run: npm install -g npm@latest
