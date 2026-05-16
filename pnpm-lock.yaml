@@ -43,26 +43,7 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
-  packages/jsc:
-    optionalDependencies:
-      '@mimusic/jsc-darwin-arm64':
-        specifier: workspace:*
-        version: link:../jsc-darwin-arm64
-      '@mimusic/jsc-darwin-x64':
-        specifier: workspace:*
-        version: link:../jsc-darwin-x64
-      '@mimusic/jsc-linux-arm64':
-        specifier: workspace:*
-        version: link:../jsc-linux-arm64
-      '@mimusic/jsc-linux-x64':
-        specifier: workspace:*
-        version: link:../jsc-linux-x64
-      '@mimusic/jsc-win32-arm64':
-        specifier: workspace:*
-        version: link:../jsc-win32-arm64
-      '@mimusic/jsc-win32-x64':
-        specifier: workspace:*
-        version: link:../jsc-win32-x64
+  packages/jsc: {}
 
   packages/jsc-darwin-arm64: {}
 

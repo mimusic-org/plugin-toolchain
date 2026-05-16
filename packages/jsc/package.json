@@ -1,6 +1,6 @@
 {
   "name": "@mimusic/jsc",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "type": "module",
   "exports": {
     ".": {
@@ -13,12 +13,12 @@
     "index.d.mts"
   ],
   "optionalDependencies": {
-    "@mimusic/jsc-linux-x64": "workspace:*",
-    "@mimusic/jsc-linux-arm64": "workspace:*",
-    "@mimusic/jsc-darwin-x64": "workspace:*",
-    "@mimusic/jsc-darwin-arm64": "workspace:*",
-    "@mimusic/jsc-win32-x64": "workspace:*",
-    "@mimusic/jsc-win32-arm64": "workspace:*"
+    "@mimusic/jsc-linux-x64": "0.6.2",
+    "@mimusic/jsc-linux-arm64": "0.6.2",
+    "@mimusic/jsc-darwin-x64": "0.6.2",
+    "@mimusic/jsc-darwin-arm64": "0.6.2",
+    "@mimusic/jsc-win32-x64": "0.6.2",
+    "@mimusic/jsc-win32-arm64": "0.6.2"
   },
   "scripts": {
     "build": "node build.mjs"

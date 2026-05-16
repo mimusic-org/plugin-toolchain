@@ -1,6 +1,6 @@
 {
   "name": "create-mimusic-plugin",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Scaffolding tool for MiMusic JS plugin projects",
   "type": "module",
   "bin": {
