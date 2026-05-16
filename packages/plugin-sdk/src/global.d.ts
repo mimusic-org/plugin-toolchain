@@ -98,12 +98,20 @@ export interface MimusicComm {
   onMessage(action: string, handler: (payload: unknown, from: string) => unknown): void;
 }
 
+export interface MimusicPlugin {
+  /** 获取插件的 JWT Token（用于访问宿主 API） */
+  getToken(): string;
+  /** 获取宿主服务的基础 URL */
+  getHostUrl(): string;
+}
+
 export interface Mimusic {
   log: MimusicLog;
   storage: MimusicStorage;
   songs: MimusicSongs;
   playlists: MimusicPlaylists;
   comm: MimusicComm;
+  plugin: MimusicPlugin;
 }
 
 // ===== 全局声明 =====
